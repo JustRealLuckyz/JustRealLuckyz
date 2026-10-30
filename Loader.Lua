@@ -1,66 +1,43 @@
 
---========================================
--- FALSIFIQUE UM OVO
--- made by JustRealLuckyz
---========================================
+-- JustRealLuckyz Hub
+-- Mobile UI | made by JustRealLuckyz
 
 local Players = game:GetService("Players")
+local UIS = game:GetService("UserInputService")
 local Workspace = game:GetService("Workspace")
-local LocalPlayer = Players.LocalPlayer
 
-local old = game:GetService("CoreGui"):FindFirstChild("JustRealLuckyzHub")
-if old then old:Destroy() end
-
+local player = Players.LocalPlayer
 local gui = Instance.new("ScreenGui")
 gui.Name = "JustRealLuckyzHub"
 gui.ResetOnSpawn = false
-
-local success = pcall(function()
-    gui.Parent = game:GetService("CoreGui")
-end)
-
-if not success or not gui.Parent then
-    gui.Parent = LocalPlayer:WaitForChild("PlayerGui")
-end
+gui.Parent = player:WaitForChild("PlayerGui")
 
 local frame = Instance.new("Frame")
-frame.Size = UDim2.fromOffset(205, 260)
-frame.Position = UDim2.new(0.5, -102, 0.5, -130)
-frame.BackgroundColor3 = Color3.fromRGB(20, 20, 29)
-frame.Active = true
-frame.Draggable = true
+frame.Size = UDim2.fromOffset(230, 310)
+frame.Position = UDim2.new(0, 15, 0.3, 0)
+frame.BackgroundColor3 = Color3.fromRGB(24, 20, 35)
 frame.Parent = gui
+Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 12)
 
-Instance.new("UICorner", frame).CornerRadius =
-    UDim.new(0, 12)
-
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, -42, 0, 38)
-title.Position = UDim2.fromOffset(8, 0)
-title.BackgroundTransparency = 1
+local title = Instance.new("TextButton")
+title.Size = UDim2.new(1, -45, 0, 42)
 title.Text = "JUSTREALLUCKYZ HUB"
-title.TextColor3 = Color3.fromRGB(190, 130, 255)
+title.TextColor3 = Color3.fromRGB(210, 170, 255)
+title.BackgroundTransparency = 1
 title.Font = Enum.Font.GothamBold
-title.TextSize = 12
+title.TextSize = 14
 title.Parent = frame
 
-local minimized = false
-local normalSize = frame.Size
-
 local minimize = Instance.new("TextButton")
-minimize.Size = UDim2.fromOffset(30, 30)
-minimize.Position = UDim2.new(1, -35, 0, 4)
-minimize.Text = "−"
+minimize.Size = UDim2.fromOffset(35, 35)
+minimize.Position = UDim2.new(1, -40, 0, 4)
+minimize.Text = "-"
 minimize.TextSize = 22
-minimize.TextColor3 = Color3.new(1,1,1)
-minimize.BackgroundColor3 = Color3.fromRGB(75, 45, 115)
 minimize.Parent = frame
 
-Instance.new("UICorner", minimize)
-
 local content = Instance.new("Frame")
-content.Size = UDim2.new(1, -20, 1, -70)
-content.Position = UDim2.fromOffset(10, 45)
+content.Position = UDim2.fromOffset(10, 48)
+content.Size = UDim2.new(1, -20, 1, -75)
 content.BackgroundTransparency = 1
 content.Parent = frame
 
@@ -68,255 +45,168 @@ local layout = Instance.new("UIListLayout")
 layout.Padding = UDim.new(0, 7)
 layout.Parent = content
 
-local states = {
-    ESP = false,
-    Lines = false,
-    Players = false
-}
-
-local function createButton(name, callback)
-    local button = Instance.new("TextButton")
-    button.Size = UDim2.new(1, 0, 0, 32)
-    button.BackgroundColor3 = Color3.fromRGB(48, 48, 65)
-    button.TextColor3 = Color3.new(1,1,1)
-    button.Font = Enum.Font.GothamSemibold
-    button.TextSize = 12
-    button.Text = name .. " [OFF]"
-    button.Parent = content
-
-    Instance.new("UICorner", button)
-
-    local active = false
-
-    button.MouseButton1Click:Connect(function()
-        active = not active
-        button.Text = name ..
-            (active and " [ON]" or " [OFF]")
-
-        button.BackgroundColor3 = active
-            and Color3.fromRGB(100, 55, 155)
-            or Color3.fromRGB(48, 48, 65)
-
-        callback(active)
-    end)
-
-    return button
-end
-
-minimize.MouseButton1Click:Connect(function()
+local minimized = false
+minimize.Activated:Connect(function()
     minimized = not minimized
-
     content.Visible = not minimized
     frame.Size = minimized
-        and UDim2.fromOffset(205, 42)
-        or normalSize
-
-    minimize.Text = minimized and "+" or "−"
+        and UDim2.fromOffset(230, 42)
+        or UDim2.fromOffset(230, 310)
+    minimize.Text = minimized and "+" or "-"
 end)
 
--- ESP
-local visuals = {}
-
-local function clearVisuals()
-    for _, objects in pairs(visuals) do
-        for _, object in ipairs(objects) do
-            if object and object.Parent then
-                object:Destroy()
-            end
-        end
+-- Arrastar com toque
+local dragging, start, origin
+title.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch
+    or input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = true
+        start = input.Position
+        origin = frame.Position
     end
-    table.clear(visuals)
+end)
+
+UIS.InputChanged:Connect(function(input)
+    if dragging and (
+        input.UserInputType == Enum.UserInputType.Touch
+        or input.UserInputType == Enum.UserInputType.MouseMovement
+    ) then
+        local delta = input.Position - start
+        frame.Position = UDim2.new(
+            origin.X.Scale, origin.X.Offset + delta.X,
+            origin.Y.Scale, origin.Y.Offset + delta.Y
+        )
+    end
+end)
+
+UIS.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.Touch
+    or input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragging = false
+    end
+end)
+
+local states = {}
+local highlights = {}
+
+local function clearESP()
+    for _, item in pairs(highlights) do
+        item:Destroy()
+    end
+    table.clear(highlights)
 end
 
-local function getRoot(character)
-    return character and (
-        character:FindFirstChild("HumanoidRootPart")
-        or character.PrimaryPart
+local function rootOf(model)
+    return model and (
+        model:FindFirstChild("HumanoidRootPart")
+        or model.PrimaryPart
     )
 end
 
-local function addESP(model, label, color)
-    if visuals[model] or not model.Parent then return end
+local function espPlayers()
+    clearESP()
+    if not states.players then return end
 
-    local root = getRoot(model)
-    if not root then return end
-
-    local objects = {}
-
-    local highlight = Instance.new("Highlight")
-    highlight.Adornee = model
-    highlight.FillColor = color
-    highlight.OutlineColor = Color3.new(1,1,1)
-    highlight.FillTransparency = 0.7
-    highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-    highlight.Parent = gui
-    table.insert(objects, highlight)
-
-    local billboard = Instance.new("BillboardGui")
-    billboard.Adornee = root
-    billboard.Size = UDim2.fromOffset(140, 25)
-    billboard.StudsOffset = Vector3.new(0, 3, 0)
-    billboard.AlwaysOnTop = true
-    billboard.Parent = gui
-    table.insert(objects, billboard)
-
-    local text = Instance.new("TextLabel")
-    text.Size = UDim2.fromScale(1,1)
-    text.BackgroundTransparency = 1
-    text.Text = label
-    text.TextColor3 = color
-    text.TextStrokeTransparency = 0.2
-    text.Font = Enum.Font.GothamBold
-    text.TextSize = 12
-    text.Parent = billboard
-
-    if states.Lines then
-        local localRoot = getRoot(LocalPlayer.Character)
-
-        if localRoot then
-            local a0 = Instance.new("Attachment")
-            a0.Parent = localRoot
-
-            local a1 = Instance.new("Attachment")
-            a1.Parent = root
-
-            local beam = Instance.new("Beam")
-            beam.Attachment0 = a0
-            beam.Attachment1 = a1
-            beam.Width0 = 0.05
-            beam.Width1 = 0.025
-            beam.Color = ColorSequence.new(color)
-            beam.Parent = gui
-
-            table.insert(objects, a0)
-            table.insert(objects, a1)
-            table.insert(objects, beam)
-        end
-    end
-
-    visuals[model] = objects
-end
-
-local function refreshESP()
-    clearVisuals()
-
-    if not states.ESP then return end
-
-    for _, player in ipairs(Players:GetPlayers()) do
-        if player ~= LocalPlayer and player.Character then
-            addESP(
-                player.Character,
-                player.DisplayName,
-                Color3.fromRGB(190, 120, 255)
-            )
-        end
-    end
-
-    for _, object in ipairs(Workspace:GetDescendants()) do
-        if object:IsA("Model")
-            and string.find(string.lower(object.Name), "egg") then
-
-            addESP(
-                object,
-                "OVO",
-                Color3.fromRGB(255, 210, 70)
-            )
+    for _, p in ipairs(Players:GetPlayers()) do
+        if p ~= player and p.Character then
+            local h = Instance.new("Highlight")
+            h.Adornee = p.Character
+            h.FillColor = Color3.fromRGB(180, 100, 255)
+            h.FillTransparency = 0.65
+            h.Parent = gui
+            table.insert(highlights, h)
         end
     end
 end
 
-createButton("ESP Player + Ovos", function(value)
-    states.ESP = value
-    refreshESP()
-end)
+local function espEggs()
+    clearESP()
+    if not states.eggs then return end
 
-createButton("Show Lines", function(value)
-    states.Lines = value
-    refreshESP()
-end)
+    for _, obj in ipairs(Workspace:GetDescendants()) do
+        if string.find(string.lower(obj.Name), "egg")
+        and (obj:IsA("Model") or obj:IsA("BasePart")) then
+            local h = Instance.new("Highlight")
+            h.Adornee = obj
+            h.FillColor = Color3.fromRGB(255, 210, 60)
+            h.FillTransparency = 0.55
+            h.Parent = gui
+            table.insert(highlights, h)
+        end
+    end
+end
 
--- Lista de jogadores
-local playerList = Instance.new("Frame")
-playerList.Size = UDim2.fromOffset(190, 180)
-playerList.Position = UDim2.new(1, 8, 0, 0)
-playerList.BackgroundColor3 = Color3.fromRGB(25,25,35)
-playerList.Visible = false
-playerList.Parent = frame
+local function button(name, callback, toggle)
+    local b = Instance.new("TextButton")
+    b.Size = UDim2.new(1, 0, 0, 38)
+    b.BackgroundColor3 = Color3.fromRGB(55, 42, 75)
+    b.TextColor3 = Color3.new(1, 1, 1)
+    b.Font = Enum.Font.GothamSemibold
+    b.TextSize = 12
+    b.Text = name .. (toggle and " [OFF]" or "")
+    b.Parent = content
+    Instance.new("UICorner", b)
 
-Instance.new("UICorner", playerList)
+    local active = false
+    b.Activated:Connect(function()
+        if toggle then
+            active = not active
+            b.Text = name .. (active and " [ON]" or " [OFF]")
+            b.BackgroundColor3 = active
+                and Color3.fromRGB(110, 65, 160)
+                or Color3.fromRGB(55, 42, 75)
+            callback(active)
+        else
+            callback()
+        end
+    end)
+end
 
-local playerText = Instance.new("TextLabel")
-playerText.Size = UDim2.new(1,0,1,0)
-playerText.BackgroundTransparency = 1
-playerText.TextColor3 = Color3.new(1,1,1)
-playerText.Font = Enum.Font.Gotham
-playerText.TextSize = 11
-playerText.TextWrapped = true
-playerText.TextYAlignment = Enum.TextYAlignment.Top
-playerText.Parent = playerList
+button("ESP Player", function(v)
+    states.players = v
+    espPlayers()
+end, true)
 
-local function updatePlayers()
+button("ESP Eggs", function(v)
+    states.eggs = v
+    espEggs()
+end, true)
+
+button("Show Lines", function(v)
+    states.lines = v
+    -- Linhas exigem attachments nos personagens.
+    warn("Show Lines: " .. tostring(v))
+end, true)
+
+button("Show Players", function()
     local names = {}
-
-    for _, player in ipairs(Players:GetPlayers()) do
-        table.insert(names, player.DisplayName)
+    for _, p in ipairs(Players:GetPlayers()) do
+        table.insert(names, p.DisplayName)
     end
-
-    playerText.Text = table.concat(names, "\n")
-end
-
-createButton("Show Players", function(value)
-    states.Players = value
-    playerList.Visible = value
-    updatePlayers()
+    warn(table.concat(names, ", "))
 end)
 
--- Auto Steal: teleporte local único para SpawnLocation
-createButton("Auto Steal", function(value)
-    if not value then return end
-
-    local character = LocalPlayer.Character
-    local root = getRoot(character)
-
-    if not root then return end
-
+button("Auto Steal - Spawn", function()
+    local character = player.Character
+    local root = rootOf(character)
     local spawn = Workspace:FindFirstChildWhichIsA(
         "SpawnLocation", true
     )
 
-    if spawn then
+    if root and spawn then
         root.CFrame = spawn.CFrame + Vector3.new(0, 4, 0)
     else
-        warn("SpawnLocation não encontrado.")
+        warn("Spawn não encontrado.")
     end
 end)
 
--- Auto Collect: botão demonstrativo
-createButton("Auto Collect", function(value)
-    warn("Auto Collect ainda precisa da lógica oficial do jogo.")
-end)
-
 local credit = Instance.new("TextLabel")
-credit.Size = UDim2.new(1, -10, 0, 15)
-credit.Position = UDim2.new(0, 5, 1, -18)
+credit.Size = UDim2.new(1, 0, 0, 18)
+credit.Position = UDim2.new(0, 0, 1, -20)
 credit.BackgroundTransparency = 1
 credit.Text = "made by JustRealLuckyz"
-credit.TextColor3 = Color3.fromRGB(155,145,175)
-credit.Font = Enum.Font.Gotham
-credit.TextSize = 9
-credit.TextXAlignment = Enum.TextXAlignment.Right
+credit.TextColor3 = Color3.fromRGB(170, 150, 195)
+credit.TextSize = 10
 credit.Parent = frame
-
-Players.PlayerAdded:Connect(function()
-    task.wait(1)
-    updatePlayers()
-    refreshESP()
-end)
-
-Players.PlayerRemoving:Connect(function()
-    task.wait(0.3)
-    updatePlayers()
-    refreshESP()
-end)
 
 print("JustRealLuckyz Hub carregado!")
